@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Statistics Canada Geography dguid Map</title>
+  <link href="./maplibre-gl.css" rel="stylesheet" />
+  <style>
+      body { margin: 0; padding: 0; }
+      html, body, #map { height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="./maplibre-gl.js"></script>
+  <script>
+    // Initialize the map
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: {
+        version: 8,
+        sources: {
+          'openstreetmap': {
+            type: 'raster',
+            tiles: [
+              'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+            ],
+            tileSize: 256,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          }
+        },
+        layers: [
+          {
+            id: 'osm',
+            type: 'raster',
+            source: 'openstreetmap'
+          }
+        ]
+      },
+      center: [-79.3832, 43.6532], // Default center (Toronto)
+      zoom: 0,
+      maxZoom: 18,
+      dragRotate: false, // disable drag rotation
+      keyboard: false, // disable keyboard interactions
+      pitchWithRotate: false // disable pitch with rotate
+    });
+
+    // Function to calculate the bounding box of GeoJSON data
+    function getGeoJSONBounds(geojson) {
+      const bounds = new maplibregl.LngLatBounds();
+
+      function extendBounds(coords) {
+        if (typeof coords[0] === 'number' && typeof coords[1] === 'number') {
+          bounds.extend(coords);
+        } else {
+          coords.forEach(extendBounds);
+        }
+      }
+
+      geojson.features.forEach(feature => {
+        const coords = feature.geometry.coordinates;
+        extendBounds(coords);
+      });
+
+      return bounds;
+    }
+
+    // Function to load GeoJSON from URL parameter
+    function loadGeoJSONFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const dguid = urlParams.get('dguid');
+      //const geojsonUrl = `https://geographies.sisyphus.ca/dguid/?dguid=${dguid}`;
+      const geojsonUrl = `/dguid/?dguid=${dguid}`;
+      if (dguid) {
+        fetch(geojsonUrl)
+          .then(response => response.json())
+          .then(data => {
+            let geojsonData;
+            geojsonData = {
+              type: 'FeatureCollection',
+              features: [{
+                type: 'Feature',
+                geometry: data,
+                properties: {}
+              }]
+            };
+            map.addSource('geojson-source', {
+              type: 'geojson',
+              data: geojsonData
+            });
+
+            // Determine layer type based on geometry
+            const firstFeature = geojsonData.features[0];
+            let layerType = 'circle';
+            if (firstFeature.geometry.type === 'Polygon' || firstFeature.geometry.type === 'MultiPolygon') {
+              layerType = 'fill';
+            } else if (firstFeature.geometry.type === 'LineString' || firstFeature.geometry.type === 'MultiLineString') {
+              layerType = 'line';
+            }
+
+            const layer = {
+              id: 'geojson-layer',
+              type: layerType,
+              source: 'geojson-source',
+              paint: {}
+            };
+
+            if (layerType === 'circle') {
+              layer.paint = {
+                'circle-radius': 15,
+                'circle-color': '#ff0000'
+              };
+            } else if (layerType === 'fill') {
+              layer.paint = {
+                'fill-color': '#ff0000',
+                'fill-opacity': 0.5
+              };
+            } else if (layerType === 'line') {
+              layer.paint = {
+                'line-color': '#ff0000',
+                'line-width': 2
+              };
+            }
+
+            map.addLayer(layer);
+
+            // Zoom for point geometries
+            if (layerType == 'circle') {
+                const latitude = data['coordinates'][1];
+                const longitude = data['coordinates'][0];
+                map.flyTo({
+                    center: [longitude, latitude],
+                    zoom: 15,
+                    animate: false
+                });
+                return
+            };
+
+            // Zoom for other types of geometries
+            const bounds = getGeoJSONBounds(geojsonData);
+            if (bounds.isEmpty()) {
+              console.warn('No valid coordinates found in GeoJSON.');
+            } else {
+              map.fitBounds(bounds, { 
+                  padding: 20,
+                  animate: false
+              });
+            }
+          })
+          .catch(error => console.error('Error loading GeoJSON:', error));
+      } else {
+        console.warn('No GeoJSON URL parameter provided.');
+      }
+    }
+
+    // Disable only the rotation aspect
+    map.touchZoomRotate.disableRotation();
+
+    // Load GeoJSON when the map is ready
+    map.on('load', loadGeoJSONFromURL);
+    map.on('style.load', () => {
+      map.setProjection({ type: 'globe' });
+    });
+  </script>
+</body>
+</html>

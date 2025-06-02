@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statistics Canada Geographies Search</title>
+  <link href="./output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-3xl">
+    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">
+      Statistics Canada Geographies Search
+    </h1>
+
+    <input
+      id="searchInput"
+      type="text"
+      placeholder="Type at least 3 characters..."
+      class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+
+    <div class="mt-6 overflow-x-auto rounded-md shadow">
+      <table class="min-w-full bg-white">
+        <thead>
+          <tr class="bg-gray-200 text-sm font-semibold text-gray-700 text-left">
+            <th class="px-4 py-2">DGUID</th>
+            <th class="px-4 py-2">Name</th>
+            <th class="px-4 py-2">Geographic Level</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody" class="text-sm text-gray-800 divide-y divide-gray-200">
+          <!-- Results will be inserted here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById('searchInput');
+    const resultsBody = document.getElementById('resultsBody');
+    let debounceTimer;
+
+    const geographicLevelLabels = {
+      13: "Country",
+      12: "Region",
+      11: "Province and Territory",
+      10: "Economic Region",
+      9: "Census Agricultural Region",
+      8: "Census Division",
+      7: "Census Consolidated Subdivision",
+      6: "Census Metropolitan Area",
+      5: "Census Subdivision",
+      4: "Federal Electoral District",
+      3: "Designated Place",
+      2: "Population Centre",
+      1: "Place Name"
+    };
+
+    input.addEventListener('input', () => {
+      const query = input.value.trim();
+      clearTimeout(debounceTimer);
+
+      if (query.length >= 3) {
+        debounceTimer = setTimeout(() => {
+          //fetch(`https://geographies.sisyphus.ca/api/?search=${encodeURIComponent(query)}`)
+          fetch(`/api/?search=${encodeURIComponent(query)}`)
+            .then(response => {
+              if (!response.ok) throw new Error('Network response was not ok');
+              return response.json();
+            })
+            .then(data => {
+              resultsBody.innerHTML = '';
+              if (data.length === 0) {
+                  resultsBody.innerHTML = `
+                    <tr>
+                      <td colspan="4" class="px-4 py-2 text-red-500">No results</td>
+                    </tr>
+                  `;
+              }
+              data.forEach(item => {
+                const dguid = item[0];
+                const searchName = item[1];
+                const geographicLevel = item[2]
+                const geographicLevelText = geographicLevelLabels[geographicLevel];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                  <td class="px-4 py-2"><a href="map.html?dguid=${dguid}" target="_blank">${dguid}</a></td>
+                  <td class="px-4 py-2">${searchName}</td>
+                  <td class="px-4 py-2">${geographicLevelText}</td>
+                `;
+                resultsBody.appendChild(row);
+              });
+            })
+            .catch(error => {
+              console.error('Error fetching data:', error);
+              resultsBody.innerHTML = `
+                <tr>
+                  <td colspan="4" class="px-4 py-2 text-red-500">Error fetching data</td>
+                </tr>
+              `;
+            });
+        }, 300);
+      } else {
+        resultsBody.innerHTML = '';
+      }
+    });
+  </script>
+</body>
+</html>

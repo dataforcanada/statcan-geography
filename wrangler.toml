@@ -1,0 +1,20 @@
+name = "statcan-geographies-search"
+main = "src/index.js"
+compatibility_date = "2025-04-02"
+workers_dev = true
+routes = [
+  { pattern = "statcan-geography.dataforcanada.org", custom_domain = true }
+]
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "geographies_search"
+database_id = "bc12b7cd-9f12-45c7-bb89-4ab22b3b2c8b"
+
+[[r2_buckets]]
+binding = 'BUCKET'
+bucket_name = 'geographies-search'
