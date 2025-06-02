@@ -6,7 +6,7 @@
 
 ## About
 
-**statcan-geographies-search** is a Cloudflare worker that allows searching of Statistics Canada's geographies and makes use of SQLite's full-text search [(FTS5)](https://www.sqlite.org/fts5.html) extension.
+**statcan-geography** is a Cloudflare worker that allows searching of Statistics Canada's geographies and makes use of SQLite's full-text search [(FTS5)](https://www.sqlite.org/fts5.html) extension.
 
 You can preview this Cloudflare worker by going to https://statcan-geography.dataforcanada.org/. After searching, you can click on the DGUID, and it will open up a map page, zooming to the geography.
 
