@@ -8,7 +8,7 @@
 
 **statcan-geographies-search** is a Cloudflare worker that allows searching of Statistics Canada's geographies and makes use of SQLite's full-text search [(FTS5)](https://www.sqlite.org/fts5.html) extension.
 
-You can preview this Cloudflare worker by going to https://geographies.sisyphus.ca/ . After searching, you can click on the DGUID, and it will open up a map page, zooming to the geography.
+You can preview this Cloudflare worker by going to https://statcan-geography.dataforcanada.org/. After searching, you can click on the DGUID, and it will open up a map page, zooming to the geography.
 
 Currently the search is just for the following geographic levels:
 
@@ -30,9 +30,9 @@ Currently the search is just for the following geographic levels:
 
 ```shell
 # 1. Clone the repository
-git clone https://github.com/diegoripley/statcan-geographies-search.git
+git clone https://github.com/dataforcanada/statcan-geography.git
 # 2. Navigate to the project directory
-cd statcan-geographies-search
+cd statcan-geography
 # 3. Install the JavaScript dependencies
 npx npm install
 # 3. Make sure you are logged in with wrangler
