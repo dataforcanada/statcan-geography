@@ -1,4 +1,4 @@
-name = "statcan-geographies-search"
+name = "statcan-geography"
 main = "src/index.js"
 compatibility_date = "2025-04-02"
 workers_dev = true
